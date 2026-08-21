@@ -1,0 +1,35 @@
+From    Grant Chappell (LOOP CAPITAL MARKETS)
+           Bcc    Brian Fund (ELEQUIN CAPITAL LP)
+      Subject   Preliminary Pricing Wire: $1,500,000,000 New York City Transitional Finance Auth
+    Attached    97)     Preliminary Wire - NYC TFA.pdf <43K>                                                                                                                                    91)        Move      Folders
+212 619 2250  grant.chappell@loopcapital.com
+11/01/2046 78,475 / +40      84,630M     5.25%     4.57      0.45
+                                    (Approx. $ Price PTC 11/01/2036 105.478)
+11/01/2047 78,285 / +40      89,080M     5.25%     4.67      0.45
+                                    (Approx. $ Price PTC 11/01/2036 104.649)
+11/01/2048 90,695 / +40      93,885M     5.25%     4.74      0.45
+                                    (Approx. $ Price PTC 11/01/2036 104.073)
+
+11/01/2050 200,675 / +40    203,215M     5.25%     4.80      0.45
+                                    (Approx. $ Price PTC 11/01/2036 103.582)
+
+11/01/2052 199,645 / +35    225,735M     5.50%     4.80      0.45
+                                    (Approx. $ Price PTC 11/01/2036 105.576)
+
+11/01/2053 101,525 / +45    122,075M     5.00%     4.93      0.45
+                                    (Approx. $ Price PTC 11/01/2036 100.547)
+11/01/2054 107,785 / +35    107,785M     5.50%     4.86      0.45
+                                    (Approx. $ Price PTC 11/01/2036 105.083)
+
+                    ---------------------------------------
+
+CALL FEATURES:  Optional call in 11/01/2036 @ 100.00
+
+MAKE-WHOLE CALL: BONDS MATURING ON OR PRIOR TO NOVEMBER 1, 2036* AT THE GREATER OF: (1)
+ONE HUNDRED PERCENT (100%) OF THE AMORTIZED VALUE OR (2) THE GREATER OF THE (A) APPLICABLE
+TAX-EXEMPT BOND RATE MINUS 10* BASIS POINTS OR (B) ZERO BASIS POINTS.  PLEASE REFER TO THE
+POC FOR MORE DETAILED INFORMATION.
+
+THE BONDS ARE BEING ISSUED AS MULTI-MODAL BONDS IN THE FIXED RATE MODE. THE AUTHORITY MAY
+CAUSE A MANDATORY TENDER ON ANY OPTIONAL REDEMPTION DATE. THE BONDS WILL REMAIN IN FIXED
+RATE MODE AT LEAST UNTIL THE OPTIONAL REDEMPTION OR MANDATORY TENDER DATE.

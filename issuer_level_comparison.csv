@@ -1,0 +1,4 @@
+pool,bonds,linear in-sample,linear cross-val,lgbm universe
+LA MTA sales tax (Part 1 filter),176,3.4,4.0,6.4
+all LOS ANG issuers,1633,9.3,10.3,14.2
+all California transportation,603,9.0,10.9,8.4

@@ -1,0 +1,89 @@
+%run Curve_Analysis.ipynb
+%run ICE_Data_Pull.ipynb
+%run Spline.ipynb
+
+print(datetime.now())
+
+pull_full_ice = False
+
+spline_size = 1000000
+issuer = 'LOS ANG CY CA MET TRA AUT SA TX RV'
+state = 'California'
+muni_type = ''
+ratings = ''
+coupon = ''
+federal_tax = 'Tax-exempt'
+state_tax = ''
+use_of_proceeds = ''
+purpose_sub_class_desc = ''
+
+yield_numeric_features = ['current_coupon_rate','days_to_first_call_30_360',
+                        'days_to_maturity_30_360','days_to_next_call_30_360','days_to_refund_30_360',
+                        'days_from_call_to_maturity_30_360','issue_amount','next_call_price',
+                        'days_to_next_sink_date_30_360','next_sink_price','outstanding_amount','principal_factor',
+                         'log_issue_amount','log_outstanding_amount','outstanding_pct_of_issue']#,
+                         #'ICE DV01','Spline DV01']
+    
+ice_yield_numeric_features = yield_numeric_features + ['ICE call_moneyness','ICE call_moneyness_pct',
+                                                     'ICE above_call_price']
+spline_yield_numeric_features = yield_numeric_features + ['Spline call_moneyness','Spline call_moneyness_pct',
+                                                     'Spline above_call_price']
+
+yield_categorical_features = ['ad_valorem_tax_status_desc','bond_insurance','composite_rating',
+                              'coupon_type_desc','distinct_call_timing_desc','enhanced_composite_rating',
+                              'federal_tax_status_desc','incorporated_state_code_desc','muni_security_type_desc',
+                              'normalized_moody_enhanced_long_rating','normalized_moody_long_rating',
+                              'normalized_sandp_long_rating',#'primary_name_abbreviated',
+                              'purpose_class_desc','purpose_sub_class_desc','security_class','state_tax_status_desc',
+                              'use_of_proceeds_desc','organization_master_id','conduit_obligor_name_id','bank_qualified',
+                              'call_notice']
+
+dv01_numeric_features = ["days_to_next_call_30_360","days_to_first_call_30_360","days_to_maturity_30_360",
+                         "days_to_next_coupon_payment","current_coupon","days_to_refund_30_360",
+                         "days_from_call_to_maturity_30_360","issue_amount","next_call_price","next_sink_price",
+                         "outstanding_amount","principal_factor"]
+
+ice_dv01_numeric_features = dv01_numeric_features + ['mid','ICE call_moneyness','ICE call_moneyness_pct',
+                                                     'ICE above_call_price']
+spline_dv01_numeric_features = dv01_numeric_features + ['Spline Mid','Spline call_moneyness','Spline call_moneyness_pct',
+                                                        'Spline above_call_price']
+
+dv01_categorical_features = ["call_extraordinary_redemption","call_indicator","daycount_basis_type_desc",
+                             "distinct_call_timing_desc","incorporated_state_code_desc","interest_payment_frequency_desc",
+                             "mandatory_sink_amount_type_desc","muni_security_type_desc","use_of_proceeds_desc"]
+
+(
+    df,
+    ice_yield_model,
+    spline_yield_model,
+    ice_dv01_model,
+    spline_dv01_model,
+) = build_ice_spline_curves(
+    paths,
+    ice_yield_numeric_features,
+    spline_yield_numeric_features,
+    yield_categorical_features,
+    ice_dv01_numeric_features,
+    spline_dv01_numeric_features,
+    dv01_categorical_features,
+    spline_size=spline_size,
+    issuer=issuer,
+    state=state,
+    muni_type=muni_type,
+    ratings=ratings,
+    coupon=coupon,
+    federal_tax=federal_tax,
+    state_tax=state_tax,
+    use_of_proceeds=use_of_proceeds,
+    min_dv01=1,
+    pull_full_ice=pull_full_ice
+)
+
+# next steps:
+# 1.) add an ice dv01 predict and a spline dv01 predict
+# 2.) guess the ice and spline dv01s for a new issue
+# 3.) 
+
+#plot_ice_spline(curves)
+
+print(datetime.now())

@@ -1,0 +1,89 @@
+%run Curve_Analysis.ipynb
+%run ICE_Data_Pull.ipynb
+%run Spline.ipynb
+%run New_Holidays.ipynb
+
+cusip = df.index[0]
+coupon = 5
+days_to_call = '6/1/2036'
+call_indicator = 'True'
+days_from_call_to_maturity_30_360 = ''
+days_to_maturity = '06/01/2045'
+next_call_price = 100
+price = 102.947
+issue_amount = (509145)*1000
+outstanding_amount = (19645)*1000
+moody_rating = 10
+sandp_rating = 10
+settlement_date = '9/3/2026'
+
+days_to_call = days_30_360(settlement_date,days_to_call)
+days_to_maturity = days_30_360(settlement_date,days_to_maturity)
+
+if days_to_call == '' or days_to_maturity == '':
+    days_from_call_to_maturity_30_360 = ''
+else:
+    days_from_call_to_maturity_30_360 = (
+        days_to_maturity - days_to_call
+    )
+    
+call_moneyness = price - next_call_price
+call_moneyness_pct = (price - next_call_price)/next_call_price
+above_call_price = price > next_call_price
+
+try:
+    print(df.loc[cusip])
+except:
+    pass
+
+dv01_changes = {
+    'current_coupon_rate': coupon,
+    'current_coupon': coupon,  # DV01 feature lists use this name, not current_coupon_rate
+    'call_indicator': call_indicator,
+    'days_to_maturity_30_360': days_to_maturity,
+    'days_to_next_call_30_360': days_to_call,
+    'days_to_first_call_30_360': days_to_call,
+    'days_from_call_to_maturity_30_360': days_from_call_to_maturity_30_360,
+    'issue_amount': issue_amount,
+    'outstanding_amount': outstanding_amount,
+    'mid':price
+}
+
+ice_dv01 = predict_curve(model=ice_dv01_model[0],result=ice_dv01_model[1],cusip=cusip,**dv01_changes)
+print(f"ICE DV01: {ice_dv01:.4f}")
+
+spline_dv01 = predict_curve(model=spline_dv01_model[0],result=spline_dv01_model[1],cusip=cusip,**dv01_changes)
+print(f"Spline DV01: {spline_dv01:.4f}")
+
+yield_changes = {
+    'current_coupon_rate': coupon,
+    'days_to_first_call_30_360': days_to_call,
+    'days_to_next_call_30_360': days_to_call,
+    'call_indicator': call_indicator,
+    'days_from_call_to_maturity_30_360':days_from_call_to_maturity_30_360,
+    'days_to_maturity_30_360': days_to_maturity,
+    'issue_amount': issue_amount,
+    'outstanding_amount': outstanding_amount,
+    'normalized_moody_long_rating': moody_rating,
+    'normalized_sandp_long_rating': sandp_rating
+}
+
+ice_yield_changes = {
+    **yield_changes,
+    'ICE call_moneyness': call_moneyness,
+    'ICE call_moneyness_pct': call_moneyness_pct,
+    'ICE above_call_price': float(above_call_price)
+}
+
+spline_yield_changes = {
+    **yield_changes,
+    'Spline call_moneyness': call_moneyness,
+    'Spline call_moneyness_pct': call_moneyness_pct,
+    'Spline above_call_price': float(above_call_price)
+}
+
+ice_yield_prediction = predict_curve(ice_yield_model[0],ice_yield_model[1],cusip='',**ice_yield_changes)
+print(f"ICE Yield Prediction: {ice_yield_prediction:.4f}%")
+
+spline_yield_prediction = predict_curve(spline_yield_model[0],spline_yield_model[1],cusip='',**spline_yield_changes)
+print(f"Spline Yield Prediction: {spline_yield_prediction:.4f}%")

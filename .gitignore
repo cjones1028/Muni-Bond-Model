@@ -1,0 +1,20 @@
+# licensed / proprietary data -- never commit
+ICE_Evals*.csv
+evals_archive/
+Universe_Clean.csv
+screen_actionable.csv
+screen_research.csv
+# regenerable model artifacts (large)
+*.joblib
+*.parquet
+Synthetic_Evals.csv
+# original notebooks contain plaintext credentials -- keep out of git
+ICE_Data_Pull.ipynb
+ICE_Trading.ipynb
+Spline.ipynb
+# scratch
+__pycache__/
+*.log
+*.done
+*.err
+pasted_wire.txt

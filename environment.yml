@@ -1,0 +1,22 @@
+# Anaconda environment for the muni wire-pricing system.
+# Create + activate:
+#     conda env create -f environment.yml
+#     conda activate munipricer
+# Then (one-time, ~20 min): retrain the model on this machine:
+#     python train_production.py
+# Verify everything:
+#     set TEST_REUSE_MODEL=1 && python test_suite.py
+name: munipricer
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+      - pandas==3.0.5
+      - numpy>=2.0
+      - scikit-learn==1.9.0
+      - lightgbm==4.7.0
+      - joblib>=1.3
+      - pyarrow>=17
+      - jupyter

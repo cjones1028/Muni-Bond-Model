@@ -1,0 +1,37 @@
+# Automated new-issue pricing off the dealer wire.
+# Run AFTER Run Code Part 1 (needs df + the four models in the namespace).
+# Replaces the hand-typed inputs of Run Code Part 2 -- every tranche on the
+# wire is parsed and priced, and model-vs-dealer error is reported in bps.
+
+%run Curve_Analysis.ipynb
+%run ICE_Data_Pull.ipynb
+%run Spline.ipynb
+%run New_Holidays.ipynb
+%run Wire_Parser.py
+
+wire_path = r'C:\Users\b.fund\OneDrive - QEC Capital\Documents\BAML Write-Up.txt'
+
+deal = parse_wire(open(wire_path, encoding='utf-8').read())
+
+print(deal['description'])
+print(f"Deal size: ${deal['issue_amount']:,}")
+print(f"Ratings: Moody's {deal['moody']} / S&P {deal['sandp']} / Fitch {deal['fitch']}"
+      f"  ->  model inputs {deal['moody_rating']} / {deal['sandp_rating']}")
+print(f"Dated {deal['dated_date']} | call {deal['call_date']} @ {deal['call_price']}"
+      f" | {len(deal['tranches'])} tranches")
+
+results = price_wire_tranches(
+    deal, df,
+    ice_yield_model, spline_yield_model,
+    ice_dv01_model, spline_dv01_model,
+    # settlement_date defaults to the dated date; template_cusip to df.index[0]
+)
+
+# archive every run -- this history of model-vs-wire errors, deal after deal,
+# is the raw material for finding where the model misses and getting under
+# ICE's ~5bp
+now_str = datetime.now().strftime('%m-%d-%Y_%H-%M-%S')
+archive_path = r'C:\Users\b.fund\OneDrive - QEC Capital\Documents\Wire Pricing Archives\ '
+results.to_csv(archive_path[:-1] + now_str + '.csv')
+
+results
