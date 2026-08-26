@@ -35,6 +35,11 @@ for f in sorted(latest.values()):
         continue
     used = (float(d['Concession Used (bps)'].iloc[0])
             if 'Concession Used (bps)' in d.columns else 13.0)  # pre-tracking runs
+    # measure the concession where it is fully expressed: the long end
+    # (priced-to-call rows). Front tranches carry little/no concession by
+    # design (see the tenor ramp in muni_model.price_wire).
+    if 'Priced To' in d.columns and (d['Priced To'] != 'Maturity').any():
+        d = d[d['Priced To'] != 'Maturity']
     implied = used - d['Error (bps)'].mean()
     rows.append({'deal': f.stem[:44], 'tranches': len(d),
                  'concession used': used,

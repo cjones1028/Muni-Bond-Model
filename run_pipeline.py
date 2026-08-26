@@ -42,17 +42,31 @@ def auto_issuer(description, df, min_frac=0.5, min_hits=3):
     words = {w for w in re.findall(r'[A-Za-z]{2,}', description.upper())}
     best_name, best_key = None, (0, 0.0, 0)
     counts = df['primary_name_abbreviated'].astype(str).str.upper().value_counts()
+
+    def _tok_match(t, w):
+        # short tokens (ST, CO, RE, NY...) prefix-match half the dictionary
+        # ("RE" -> RELEASE), which once matched a 1-bond Maryland parking
+        # issuer to Penn State. Short tokens must match exactly; only 3+
+        # letter tokens may match as abbreviations/prefixes.
+        return w.startswith(t) if len(t) >= 3 else w == t
+
     for name, n_bonds in counts.items():
+        if n_bonds < 5:
+            continue   # a handful of bonds is too thin to be a pricing context
         toks = [t for t in name.split() if len(t) >= 2]
         if len(toks) < 3:
             continue
-        # primary score: how many DISTINCT wire words this name accounts for
-        # (prevents 'METROPOLITAN ... AUTH' of the wrong state winning on its
-        # own short token list); frac = share of the name's tokens matched
-        covered = {w for w in words if any(w.startswith(t) for t in toks)}
-        hits = sum(any(w.startswith(t) for w in words) for t in toks)
+        # primary score: the CHARACTER MASS of distinct wire words this name
+        # accounts for -- distinctive words (PENNSYLVANIA) outweigh filler
+        # (THE, OF), which once let Rutgers outscore Penn State's own name
+        # by covering four junk words. Stopwords count for nothing.
+        STOP = {'THE', 'OF', 'AND', 'FOR', 'SERIES', 'BONDS', 'STATE', 'ST'}
+        long_toks = [t for t in toks if len(t) >= 3]
+        covered = {w for w in words if any(_tok_match(t, w) for t in long_toks)}
+        cover_mass = sum(len(w) for w in covered if w not in STOP)
+        hits = sum(any(_tok_match(t, w) for w in words) for t in toks)
         frac = hits / len(toks)
-        key = (len(covered), frac, n_bonds)
+        key = (cover_mass, frac, n_bonds)
         if frac >= min_frac and hits >= min_hits and key > best_key:
             best_name, best_key = name, key
     if best_name:
@@ -81,7 +95,11 @@ def default_concession():
         try:
             d = pd.read_csv(f)
             if 'Error (bps)' in d.columns and 'Concession Used (bps)' in d.columns and len(d):
-                vals.append(float(d['Concession Used (bps)'].iloc[0]) - d['Error (bps)'].mean())
+                used = float(d['Concession Used (bps)'].iloc[0])
+                # long end only -- matches the tenor ramp in price_wire
+                if 'Priced To' in d.columns and (d['Priced To'] != 'Maturity').any():
+                    d = d[d['Priced To'] != 'Maturity']
+                vals.append(used - d['Error (bps)'].mean())
         except Exception:
             continue
     if vals:

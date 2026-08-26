@@ -18,3 +18,8 @@ __pycache__/
 *.done
 *.err
 pasted_wire.txt
+# spline data (licensed) -- never commit
+spline_pricing*.csv
+spline_curves*.csv
+ISIN*
+train_production.log
