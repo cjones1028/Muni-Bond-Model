@@ -54,7 +54,13 @@ def auto_issuer(description, df, min_frac=0.5, min_hits=3):
         if n_bonds < 5:
             continue   # a handful of bonds is too thin to be a pricing context
         toks = [t for t in name.split() if len(t) >= 2]
-        if len(toks) < 3:
+        # 2-token names are legitimate (state GOs: 'WASHINGTON ST') and
+        # all-short-token names are too ('LOS ANG CY CA MET TRA AUT') --
+        # both were excluded by earlier gates (caught 8/27, unseen-input
+        # test + regression). Guard against junk differently: short names
+        # must match COMPLETELY (frac == 1.0), and hits required scales
+        # with name length instead of a flat 3.
+        if len(toks) < 2:
             continue
         # primary score: the CHARACTER MASS of distinct wire words this name
         # accounts for -- distinctive words (PENNSYLVANIA) outweigh filler
@@ -67,7 +73,9 @@ def auto_issuer(description, df, min_frac=0.5, min_hits=3):
         hits = sum(any(_tok_match(t, w) for w in words) for t in toks)
         frac = hits / len(toks)
         key = (cover_mass, frac, n_bonds)
-        if frac >= min_frac and hits >= min_hits and key > best_key:
+        need_hits = min(min_hits, len(toks))
+        need_frac = 1.0 if len(toks) == 2 else min_frac
+        if frac >= need_frac and hits >= need_hits and key > best_key:
             best_name, best_key = name, key
     if best_name:
         print(f"auto-matched issuer: '{best_name}' ({best_key[2]:,} bonds, "
