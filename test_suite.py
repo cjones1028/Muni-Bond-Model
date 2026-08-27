@@ -179,7 +179,7 @@ print("7. end-to-end regression on both wires")
 # wrong credit (verified: ~33 bps one-directional skew). price_wire warns on
 # that mismatch; the broad pool is correct here.
 templ_la = mm.template_from(df, issuer_contains='LOS ANG')
-res_la = mm.price_wire(baml, bundle, templ_la, concession_bps=13)
+res_la = mm.price_wire(baml, bundle, templ_la, concession_bps=13)  # pinned-for-regression: tests stay stable vs drifting calibration
 la_mae = res_la['Error (bps)'].abs().mean()
 check("LA Metro: 16 rows priced", len(res_la) == 16)
 check("LA Metro mean abs err < 8 bps (was ~3)", la_mae < 8, f"{la_mae:.1f}")
@@ -188,11 +188,11 @@ templ_bad = mm.template_from(df, issuer_contains='LOS ANG CY CA MET TRA AUT')
 import io, contextlib
 buf = io.StringIO()
 with contextlib.redirect_stdout(buf):
-    mm.price_wire(baml, bundle, templ_bad, concession_bps=13)
+    mm.price_wire(baml, bundle, templ_bad, concession_bps=13)  # pinned-for-regression: tests stay stable vs drifting calibration
 check("credit-mismatch template triggers warning", 'WARNING: wire rating' in buf.getvalue())
 
 templ_ny = mm.template_from(df, issuer_contains='CITY TRANSITIONAL FIN')
-res_ny = mm.price_wire(nyc, bundle, templ_ny, concession_bps=13)
+res_ny = mm.price_wire(nyc, bundle, templ_ny, concession_bps=13)  # pinned-for-regression: tests stay stable vs drifting calibration
 ny_mae = res_ny['Error (bps)'].abs().mean()
 check("NYC TFA: 7 rows priced", len(res_ny) == 7)
 check("NYC TFA mean abs err < 8 bps (was ~3)", ny_mae < 8, f"{ny_mae:.1f}")

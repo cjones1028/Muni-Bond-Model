@@ -440,7 +440,7 @@ def template_from(df, issuer_contains=None, cusip=None):
 
 
 def price_wire(deal, bundle, template, settlement_date=None,
-               concession_bps=0.0, rating_overrides=True):
+               concession_bps=0.0, rating_overrides=True):  # 0.0 = API default: caller supplies calibration
     """Price every tranche of a parsed wire (Wire_Parser.parse_wire output).
     Returns a DataFrame of wire vs model yields with error in bps.
 
