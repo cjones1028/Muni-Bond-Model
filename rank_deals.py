@@ -31,8 +31,11 @@ import muni_model as mm
 from Wire_Parser import parse_wire
 
 EXIT_COST_BPS = 5.0
-CONCESSION_BPS = 14.0   # from concession_tracker.py (implied 13.6 / 14.2 on 2 deals)
-SIGMA_CONC = 3.0        # kept conservative while n=2, despite the tight spread
+# concession: same self-calibration as run_pipeline (a hardcoded value here
+# drifted 7bp out of sync with the pipeline once -- caught 8/27)
+from run_pipeline import default_concession
+CONCESSION_BPS = default_concession()
+SIGMA_CONC = 3.0        # conservative while n=4 deals
 MAE_TO_SD = 1.25        # normal-dist MAE -> stdev
 CPN_BINS = [0, 4, 5, 6, 99]
 TEN_BINS = [0, 5, 15, 25, 200]
@@ -85,7 +88,9 @@ tdf = pd.read_parquet(HERE / 'template_cache.parquet')
 bundle = mm.load_bundle(HERE / 'model.joblib')
 
 DEALS = [('LA Metro I-105 (BBB- toll)', 'BAML Write-Up.txt', 'LOS ANG'),
-         ('NYC TFA (AAA-class)', 'NYC_TFA_wire.txt', 'CITY TRANSITIONAL FIN')]
+         ('NYC TFA (AAA-class)', 'NYC_TFA_wire.txt', 'CITY TRANSITIONAL FIN'),
+         ('Penn State (Aa1/AA)', 'psu_wire.txt', 'PENNSYLVANIA STATE UNIVERSITY'),
+         ('Portland Water (Aa2/AA+)', 'portland_wire.txt', 'PORTLAND ORE SWR')]
 
 rows = []
 for deal_name, fname, issuer in DEALS:
