@@ -45,6 +45,13 @@ DATED:01/15/2027
 06/01/2030     10,000M     5.00%     3.00      0.25
                       (Approx. $ Price 106.100)
 """,
+    "compound rating Aa1/VMIG-1": """RE: $ 10,000,000
+TEST
+MOODY'S: Aa1/VMIG-1 (Stable)             S&P:   AA+* (Watch)
+DATED:01/15/2027
+06/01/2030     10,000M     5.00%     3.00      0.25
+                      (Approx. $ Price 106.100)
+""",
     "empty wire": "",
     "no maturities at all": "RE: $ 10,000,000\nJUST A HEADER\nDATED:01/15/2027\n",
 }

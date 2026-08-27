@@ -25,6 +25,7 @@ Intended flow (see run_pipeline.py for the one-command version):
 """
 
 from datetime import datetime
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -157,6 +158,20 @@ def clean_universe(df, federal_tax='Tax-exempt', state=None,
     return out
 
 
+def stacked_frame(here=None):
+    """THE canonical training frame: every dated snapshot in evals_archive
+    stacked (fallback: the single current evals file). All trainers must use
+    this -- three separate code paths once trained different recipes and two
+    of them silently overwrote the production model (caught 8/27)."""
+    here = Path(here) if here else Path(__file__).resolve().parent
+    snaps = sorted((here / 'evals_archive').glob('ICE_Evals_*.csv'))
+    if snaps:
+        df = pd.concat([clean_universe(load_evals(p)) for p in snaps])
+        print(f"stacked {len(snaps)} snapshot(s): {len(df):,} rows")
+        return df
+    return clean_universe(load_evals(here / 'ICE_Evals.csv'))
+
+
 def build_features(df):
     """Derived columns (mirrors Run Code Part 1's derived features)."""
     df = df.copy()
@@ -284,10 +299,16 @@ def train_yield_model(df, numeric=None, categorical=None,
     X = _prep_matrix(df, numeric, categorical)
     y = df['target_yield'].astype(float)
 
-    rng = np.random.RandomState(seed)
-    r = rng.rand(len(df))
-    test_mask = r < test_size                       # untouched holdout
-    val_mask = (r >= test_size) & (r < test_size + 0.08)  # early-stop slice
+    # CUSIP-level split (8/27 fix): stacked snapshots repeat CUSIPs, so the
+    # old row-level split let ~80% of "held-out" bonds also reach training
+    # via their other snapshot's row. Split by CUSIP, and persist the set in
+    # the bundle so downstream evaluations grade on genuinely unseen bonds.
+    cusips = pd.Index(df.index.unique())
+    rc = np.random.RandomState(seed).rand(len(cusips))
+    test_cusips = set(cusips[rc < test_size])
+    val_cusips = set(cusips[(rc >= test_size) & (rc < test_size + 0.08)])
+    test_mask = df.index.isin(test_cusips)
+    val_mask = df.index.isin(val_cusips)
     fit_mask = ~test_mask & ~val_mask
 
     params = dict(objective='l1', n_estimators=8000, learning_rate=0.03,
@@ -305,6 +326,7 @@ def train_yield_model(df, numeric=None, categorical=None,
 
     bundle = {'models': models, 'model': models[0],
               'numeric': numeric, 'categorical': categorical,
+              'holdout_cusips': sorted(test_cusips),
               'categories': {c: list(X[c].cat.categories) for c in categorical}}
 
     pred = predict_bundle(bundle, X[test_mask])
@@ -497,13 +519,15 @@ def price_wire(deal, bundle, template, settlement_date=None,
                 f"against a newer model.joblib -- restart the Jupyter kernel "
                 f"(or importlib.reload(muni_model)), or use Price Wire.bat.")
     members = np.array([m.predict(X) for m in (bundle.get('models') or [bundle['model']])])
-    # the new-issue concession lives in the LONG bonds -- the 1-3yr maturities
-    # get almost none (retail ladder demand takes them at fair value). A flat
-    # concession over-adds at the front and falsely reads short tranches as
-    # "rich" (observed on both PSU and Portland: +18-22bp at 1yr, decaying to
-    # ~0 by year 7-8). Ramp: zero at 0yr, full concession from 8yrs out.
-    tenor_yrs = pd.to_numeric(fdf['days_to_maturity_30_360'], errors='coerce').to_numpy() / 360
-    ramp = np.clip(tenor_yrs / 8.0, 0, 1)
+    # the new-issue concession lives in the LONG bonds -- short tranches get
+    # almost none (observed on PSU and Portland: +18-22bp false "rich" reads
+    # at 1yr under a flat concession). Ramp: zero at 0yr, full from 8yrs.
+    # Keyed on years to WORKOUT (call date if priced-to-call, else maturity)
+    # -- the same axis the calibration measures on (unified 8/27).
+    workout_days = np.array([
+        days_30_360(settlement, t['ptc_date'] or t['maturity'])
+        for t in deal['tranches'] if t['price'] is not None], dtype=float)
+    ramp = np.clip(workout_days / 360.0 / 8.0, 0, 1)
     pred = members.mean(axis=0) + concession_bps * ramp / 100
     ens_std_bps = members.std(axis=0) * 100
 

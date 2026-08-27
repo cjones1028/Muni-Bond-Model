@@ -19,31 +19,20 @@ import pandas as pd
 HERE = Path(__file__).resolve().parent
 ARCH = HERE / 'wire_archive'
 
-# one vote per DEAL: re-priced wires create multiple files; use each deal's
-# newest archive only
-import re as _re
-latest = {}
-for f in ARCH.glob('*.csv'):
-    tag = _re.sub(r'_\d{2}-\d{2}-\d{4}_\d{2}-\d{2}-\d{2}$', '', f.stem)
-    if tag not in latest or f.stat().st_mtime > latest[tag].stat().st_mtime:
-        latest[tag] = f
+# implied concessions from the single calibration source (workout-axis
+# definition, one vote per deal -- see calibration.py)
+from calibration import _implied_per_deal, _latest_per_deal
 
+implied = _implied_per_deal()
+files = _latest_per_deal()
 rows = []
-for f in sorted(latest.values()):
-    d = pd.read_csv(f)
-    if 'Error (bps)' not in d.columns or not len(d):
-        continue
+for tag, val in sorted(implied.items()):
+    d = pd.read_csv(files[tag])
     used = (float(d['Concession Used (bps)'].iloc[0])
-            if 'Concession Used (bps)' in d.columns else 13.0)  # pre-tracking runs
-    # measure the concession where it is fully expressed: the long end
-    # (priced-to-call rows). Front tranches carry little/no concession by
-    # design (see the tenor ramp in muni_model.price_wire).
-    if 'Priced To' in d.columns and (d['Priced To'] != 'Maturity').any():
-        d = d[d['Priced To'] != 'Maturity']
-    implied = used - d['Error (bps)'].mean()
-    rows.append({'deal': f.stem[:44], 'tranches': len(d),
+            if 'Concession Used (bps)' in d.columns else float('nan'))
+    rows.append({'deal': tag[:44], 'tranches': len(d),
                  'concession used': used,
-                 'implied concession (bps)': round(implied, 1)})
+                 'implied concession (bps)': round(val, 1)})
 
 if not rows:
     sys.exit("no archived deals found in wire_archive\\")

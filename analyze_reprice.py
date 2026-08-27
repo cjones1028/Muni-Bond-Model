@@ -31,7 +31,8 @@ deal = parse_wire(open(HERE / 'psu_wire.txt', encoding='utf-8').read())
 df = pd.read_parquet(HERE / 'template_cache.parquet')
 bundle = mm.load_bundle(HERE / 'model.joblib')
 templ = mm.template_from(df, issuer_contains='PENNSYLVANIA STATE UNIVERSITY')
-res = mm.price_wire(deal, bundle, templ, concession_bps=7.0)
+from calibration import concession
+res = mm.price_wire(deal, bundle, templ, concession_bps=concession())
 
 rows = []
 for mat, r in res.iterrows():

@@ -16,9 +16,12 @@ df = mm.clean_universe(df)
 dfF = mm.build_features(df)
 bundle = mm.load_bundle(HERE / 'model.joblib')
 
-rng = np.random.RandomState(42)
-test = rng.rand(len(dfF)) < 0.2
-h = dfF[test].copy()
+# the bundle's own persisted holdout -- an independent mask leaked 92%
+# trained-on bonds under stacked training (8/27)
+hc = bundle.get('holdout_cusips')
+if hc is None:
+    sys.exit("model.joblib predates CUSIP-split training -- retrain first")
+h = dfF[dfF.index.isin(set(hc))].copy()
 X = mm._prep_matrix(h, bundle['numeric'], bundle['categorical'], bundle['categories'])
 
 preds = np.array([m.predict(X) for m in bundle['models']])
@@ -63,3 +66,12 @@ print(f"\nworst UNFLAGGED misses ({len(missed)} bonds >25bps escaped the filter)
 cols = [c for c in ['target_yield','pred','abs_err','ens_std_bps','composite_rating',
                     'current_coupon_rate','days_to_maturity_30_360','purpose_class_desc'] if c in h]
 print(missed.nlargest(8,'abs_err')[cols].round(2).to_string())
+
+# publish the trusted-set error scale for screen_universe's edge scoring
+from calibration import write_trust_stats
+write_trust_stats({
+    'trusted_p90_bps': round(float(np.percentile(t['abs_err'], 90)), 2),
+    'trusted_mean_bps': round(float(t['abs_err'].mean()), 2),
+    'trusted_median_bps': round(float(t['abs_err'].median()), 2),
+    'trusted_share': round(float((~flagged).mean()), 3),
+})

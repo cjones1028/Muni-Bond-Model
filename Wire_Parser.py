@@ -67,14 +67,20 @@ def _rating(text, agency):
     m = re.search(re.escape(agency) + r"\s*:\s*(\S+)", text)
     if not m:
         return 'NR'
-    val = m.group(1)
+    raw = m.group(1)
     # a blank rating slot makes \S+ swallow the NEXT label (seen live:
-    # "FITCH:            KROLL: NR" parsed Fitch as "KROLL:"). A real rating
-    # never contains ':' and matches the agency scales or NR.
-    if val.endswith(':') or (val not in MOODY_SCALE and val not in SP_SCALE
-                             and val.upper() != 'NR'):
+    # "FITCH:            KROLL: NR" parsed Fitch as "KROLL:")
+    if raw.endswith(':'):
         return 'NR'
-    return val
+    # real wires carry compound formats -- "Aa1/VMIG-1" (long/short dual
+    # rating), "AA+*" (watch flag). Take the long-term component and strip
+    # decorations before validating against the agency scales.
+    val = raw.split('/')[0].rstrip('*').strip()
+    if val in MOODY_SCALE or val in SP_SCALE or val.upper() == 'NR':
+        return val
+    print(f"NOTE: unrecognized {agency} rating '{raw}' on this wire -- "
+          f"treating as NR (template rating will be used)")
+    return 'NR'
 
 
 def parse_wire(text):

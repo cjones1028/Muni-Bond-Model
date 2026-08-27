@@ -31,11 +31,10 @@ import muni_model as mm
 from Wire_Parser import parse_wire
 
 EXIT_COST_BPS = 5.0
-# concession: same self-calibration as run_pipeline (a hardcoded value here
-# drifted 7bp out of sync with the pipeline once -- caught 8/27)
-from run_pipeline import default_concession
-CONCESSION_BPS = default_concession()
-SIGMA_CONC = 3.0        # conservative while n=4 deals
+# all calibrated constants from the single source (calibration.py)
+from calibration import concession, concession_sigma
+CONCESSION_BPS = concession()
+SIGMA_CONC = concession_sigma()
 MAE_TO_SD = 1.25        # normal-dist MAE -> stdev
 CPN_BINS = [0, 4, 5, 6, 99]
 TEN_BINS = [0, 5, 15, 25, 200]
@@ -51,9 +50,13 @@ def bucket_error_table():
     df = mm.clean_universe(df)
     dfF = mm.build_features(df)
     bundle = mm.load_bundle(HERE / 'model.joblib')
-    rng = np.random.RandomState(42)
-    test = rng.rand(len(dfF)) < 0.2
-    h = dfF[test].copy()
+    # grade only on the bundle's OWN persisted holdout -- an independent
+    # random mask leaked 92% trained-on bonds under stacked training (8/27)
+    hc = bundle.get('holdout_cusips')
+    if hc is None:
+        raise RuntimeError("model.joblib predates CUSIP-split training -- "
+                           "retrain with train_production.py first")
+    h = dfF[dfF.index.isin(set(hc))].copy()
     X = mm._prep_matrix(h, bundle['numeric'], bundle['categorical'], bundle['categories'])
     h['abs_err'] = np.abs(mm.predict_bundle(bundle, X) - h['target_yield']) * 100
     h['cb'] = pd.cut(pd.to_numeric(h['current_coupon_rate'], errors='coerce'), CPN_BINS)

@@ -150,7 +150,9 @@ if os.environ.get('TEST_REUSE_MODEL') == '1':
     print("  (TEST_REUSE_MODEL=1: validating the existing model.joblib, no retrain)")
     bundle = mm.load_bundle(HERE / 'model.joblib')
 else:
-    bundle = mm.train_yield_model(df, seed=42)
+    # same canonical recipe as train_production -- a single-snapshot train
+    # here once silently overwrote the stacked production model (8/27)
+    bundle = mm.train_yield_model(mm.stacked_frame(HERE), seed=42)
     mm.save_bundle(bundle, HERE / 'model.joblib')
 check("holdout MAE < 10 bps", bundle['mae_bps'] < 10, f"{bundle['mae_bps']:.1f}")
 

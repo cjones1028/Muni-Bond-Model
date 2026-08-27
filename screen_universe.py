@@ -38,11 +38,10 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import muni_model as mm
 
-# scale unit for edge_score: holdout p90 error of the TRUSTED set. A pure
-# scaling constant -- ranking order is unaffected by its value, only the
-# "edge_score < ~1.5 is noise" rule of thumb. Re-measure with
-# diag_confidence.py after major retrains (last measured 2026-08-19).
-TRUSTED_P90_BPS = 8.6
+# scale unit for edge_score: holdout p90 error of the TRUSTED set, from the
+# calibration source (diag_confidence.py refreshes it after retrains)
+from calibration import trusted_p90
+TRUSTED_P90_BPS = trusted_p90()
 
 
 def main():

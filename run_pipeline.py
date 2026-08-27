@@ -79,35 +79,9 @@ def auto_issuer(description, df, min_frac=0.5, min_hits=3):
 
 
 def default_concession():
-    """Self-calibrating concession: mean implied concession across archived
-    deals (see concession_tracker.py); falls back to 14 with no archive."""
-    import pandas as pd
-    import re as _re
-    # one vote per DEAL: re-pricing the same wire creates multiple archive
-    # files, so keep only the newest file per deal tag
-    latest = {}
-    for f in (HERE / 'wire_archive').glob('*.csv'):
-        tag = _re.sub(r'_\d{2}-\d{2}-\d{4}_\d{2}-\d{2}-\d{2}$', '', f.stem)
-        if tag not in latest or f.stat().st_mtime > latest[tag].stat().st_mtime:
-            latest[tag] = f
-    vals = []
-    for f in latest.values():
-        try:
-            d = pd.read_csv(f)
-            if 'Error (bps)' in d.columns and 'Concession Used (bps)' in d.columns and len(d):
-                used = float(d['Concession Used (bps)'].iloc[0])
-                # long end only -- matches the tenor ramp in price_wire
-                if 'Priced To' in d.columns and (d['Priced To'] != 'Maturity').any():
-                    d = d[d['Priced To'] != 'Maturity']
-                vals.append(used - d['Error (bps)'].mean())
-        except Exception:
-            continue
-    if vals:
-        c = round(sum(vals) / len(vals), 1)
-        print(f"concession auto-calibrated: {c} bps from {len(vals)} archived deal(s)")
-        return c
-    print("concession default: 14 bps (no archive yet)")
-    return 14.0
+    """Delegates to the single calibration source (see calibration.py)."""
+    from calibration import concession
+    return concession()
 
 
 def main():
@@ -137,9 +111,8 @@ def main():
         print(f"loading cached model {model_path.name} (use --retrain after a new eval pull)")
         bundle = mm.load_bundle(model_path)
     else:
-        print(f"training from {args.evals} ...")
-        df = mm.load_evals(args.evals)
-        df = mm.clean_universe(df, state=args.state)
+        print("training (canonical stacked recipe)...")
+        df = mm.stacked_frame(HERE)
         bundle = mm.train_yield_model(df)
         if args.report:
             mm.error_report(bundle)
