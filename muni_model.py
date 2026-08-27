@@ -542,6 +542,15 @@ def price_wire(deal, bundle, template, settlement_date=None,
         'Model Yield': np.round(pred, 4),
     }).set_index('Maturity')
     out['Error (bps)'] = ((out['Model Yield'] - out['Wire Yield']) * 100).round(1)
+    # decomposition: total error = deal LEVEL (this deal's concession vs the
+    # calibrated estimate -- irreducible ~+/-2bp until the deal count grows)
+    # + tranche SHAPE (relative value within the deal, the model's strength).
+    # Deal-Rel = error minus the deal's long-end mean level: which tranches
+    # are rich/cheap RELATIVE TO THIS DEAL'S OWN PRICING LEVEL.
+    long_end = ramp >= 0.999
+    if long_end.sum() >= 3:
+        level = float(out['Error (bps)'].to_numpy()[long_end].mean())
+        out['Deal-Rel (bps)'] = (out['Error (bps)'] - level).round(1)
     # confidence: disagreement between ensemble members (high std = off the
     # training map), AND tranches under ~1.25yr -- the model trains on no
     # sub-1yr bonds (see train_yield_model), so its front-end reads are
