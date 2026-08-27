@@ -47,7 +47,21 @@ hand-entry mistake was found in the original files).
   formulas (MATH.md), README with known limitations.
 - Deployed locally (JupyterLab) and packaged for Anaconda.
 
-## Results (measured)
+## Update 8/27 (supersedes the numbers below where they differ)
+
+Live record is now FOUR deals / 72 tranches (~3.0 bps mean vs dealer
+pricing) -- LA Metro, NYC TFA, Penn State, Portland Water. The Penn State
+same-day repricing corroborated the model's read: tranches it flagged rich
+drew 0.0-0.8x subscription and were repriced toward model fair (+0.58
+correlation between model read and dealer adjustments; one deal, so
+encouraging rather than proof). First time-forward validation (train on
+week-old data, predict current marks) shows same-day numbers flatter the
+model by ~1 bp; training now stacks all dated snapshots. Concession is
+self-calibrated (~7 +/- 3 bps, tenor-ramped). Caveats that still bind: small
+live sample from one week, reused during development; the clean track record
+starts with deals priced once on a frozen model.
+
+## Results (measured 8/19-8/26, first two deals)
 
 - Universe holdout (16,482 bonds never seen in training, vs ICE marks):
   5.3 bps mean absolute error, 2.2 bps median.

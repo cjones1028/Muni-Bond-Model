@@ -12,14 +12,20 @@ model + manually keyed bond attributes).
 
 | Test | Old approach (linear) | This model |
 |---|---|---|
-| Old approach's designed use: one large issuer, refit per issuer (matched 5-fold CV, LA MTA pool) | ~4.0 bps | **3.3 bps** |
-| One model pricing the whole universe, no per-issuer refit (16,482-bond holdout vs ICE marks) | 20.2 bps* | **5.3 bps mean / 2.2 median** |
-| LA Metro I-105 toll deal, $509mm, 16 tranches (vs dealer wire, concession 14) | n/a (new credit, too few bonds to fit) | **2.5 bps mean** |
-| NYC TFA, $1.5B, 7 tranches, out-of-sample (vs dealer wire, concession 14) | — | **1.0 bps mean (max 2.5)** |
+| Old approach's designed use: one large issuer, refit per issuer (matched 5-fold CV) | ~4.0 bps | **3.3 bps** |
+| One model, whole universe, no per-issuer refit (held-out bonds vs ICE marks, same-day) | 20.2 bps* | **~2.5 bps median** |
+| Time-forward (train on week-old data, predict current marks) -- the honest deployment metric | not measured | **~1 bp worse than same-day** |
+| Four live deals vs dealer wires (LA Metro, NYC TFA, Penn State, Portland Water; 72 tranches) | n/a | **~3.0 bps mean** |
+| Penn State repricing check: model-flagged-rich tranches went 0.0-0.8x subscribed and were repriced toward model fair; correlation of model read vs dealer adjustments | — | **+0.58** (one deal; encouraging, not proof) |
 
-The 14 bps concession comes from `concession_tracker.py`, which backs an
-implied concession out of every archived deal (13.6 and 14.2 on the first
-two) -- it re-estimates automatically as deals accumulate.
+Honesty notes on the live numbers: the four-deal sample is small, spans one
+week, and the deals were re-run during development -- they function as
+regression tests more than blind validation; the clean track record starts
+with deals priced once on a frozen model. The new-issue concession is
+measured from the archive (currently ~7 bps +/- 3, tenor-ramped: near zero
+under 1yr, full by ~8yrs) and re-estimates automatically; with n=4 deals it
+is an estimate with a mechanism, not a settled number. Sub-1.25yr tranches
+are flagged reduced-confidence by design (no sub-1yr training support).
 
 \* Not how the old approach was used in practice -- it was always refit per
 issuer, where it scores ~4-5 bps. The 20.2 quantifies why it REQUIRED that
@@ -30,15 +36,19 @@ data/features/splits: the gradient-boosted model won 12/12 simulation rounds
 and was closer on 85% of individual bonds (`model_comparison.csv`,
 `fair_fight_results.csv`, `issuer_level_comparison.csv`).
 
-Both wire tests used a fixed +13 bps new-issue concession (estimated on the
-LA deal, applied blind to the NYC deal). Every run archives to
-`wire_archive\`; that history refines the concession estimate over time.
+Every run archives to `wire_archive\`; that history drives the
+self-calibrating concession. Training stacks all dated snapshots in
+`evals_archive\` (adopted after time-forward testing showed multi-day
+training beats single-day).
 
 ## Daily use
 
 ```
-python run_pipeline.py --wire "<saved wire>.txt" --issuer "<ICE issuer text>" --concession 13
+python run_pipeline.py --wire "<saved wire>.txt"
 ```
+
+(Issuer auto-matches from the wire text; concession auto-calibrates from the
+archive. Or drag the .txt onto `Price Wire.bat`.)
 
 - `--wire` (required): the dealer wire, copied in full from Bloomberg into a
   .txt file. Formats handled: BAML-style and Loop Capital-style; a new

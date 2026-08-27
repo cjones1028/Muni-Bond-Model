@@ -37,6 +37,14 @@ DATED:01/15/2027
 06/01/2040     10,000M     5.00%     4.10      0.40   AAA/AA+
                       (Approx. $ Price 106.000)
 """,
+    "blank rating slot before next label": """RE: $ 10,000,000
+TEST
+MOODY'S: Aa2 (Stable)                   S&P:   AA (Stable)
+FITCH:                             KROLL: NR
+DATED:01/15/2027
+06/01/2030     10,000M     5.00%     3.00      0.25
+                      (Approx. $ Price 106.100)
+""",
     "empty wire": "",
     "no maturities at all": "RE: $ 10,000,000\nJUST A HEADER\nDATED:01/15/2027\n",
 }

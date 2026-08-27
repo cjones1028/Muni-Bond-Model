@@ -13,8 +13,18 @@ DONE = HERE / 'train_production.done'
 DONE.unlink(missing_ok=True)
 
 try:
-    df = mm.load_evals(HERE / 'ICE_Evals.csv')
-    df = mm.clean_universe(df)
+    import pandas as pd
+    # STACKED training (adopted 8/27, exp_forward): train on every archived
+    # snapshot, not just the latest -- two-day stack beat single-day by
+    # ~0.6 bps MAE on an identical holdout with no wire degradation. Each
+    # future dated pull automatically deepens the stack.
+    snaps = sorted((HERE / 'evals_archive').glob('ICE_Evals_*.csv'))
+    if snaps:
+        frames = [mm.clean_universe(mm.load_evals(p)) for p in snaps]
+        df = pd.concat(frames)
+        print(f"stacked {len(snaps)} snapshot(s): {len(df):,} rows")
+    else:
+        df = mm.clean_universe(mm.load_evals(HERE / 'ICE_Evals.csv'))
     bundle = mm.train_yield_model(df)
     mm.save_bundle(bundle, HERE / 'model.joblib')
     cols = [c for c in mm.CATEGORICAL_FEATURES + ['primary_name_abbreviated'] if c in df.columns]

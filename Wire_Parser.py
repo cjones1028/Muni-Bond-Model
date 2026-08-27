@@ -65,7 +65,16 @@ def _date(s):
 
 def _rating(text, agency):
     m = re.search(re.escape(agency) + r"\s*:\s*(\S+)", text)
-    return m.group(1) if m else 'NR'
+    if not m:
+        return 'NR'
+    val = m.group(1)
+    # a blank rating slot makes \S+ swallow the NEXT label (seen live:
+    # "FITCH:            KROLL: NR" parsed Fitch as "KROLL:"). A real rating
+    # never contains ':' and matches the agency scales or NR.
+    if val.endswith(':') or (val not in MOODY_SCALE and val not in SP_SCALE
+                             and val.upper() != 'NR'):
+        return 'NR'
+    return val
 
 
 def parse_wire(text):
