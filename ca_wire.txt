@@ -1,0 +1,72 @@
+RE: $ 2,844,730,000*
+STATE OF CALIFORNIA
+GENERAL OBLIGATION BONDS
+VARIOUS PURPOSE GENERAL OBLIGATION BONDS &
+VARIOUS PURPOSE GENERAL OBLIGATION REFUNDING BONDS
+
+  MOODY'S: Aa2 (Stable)                   S&P:   AA- (Stable)
+  FITCH:   AA (Stable)                    KROLL:
+
+  DATED:09/03/2026   FIRST COUPON:02/01/2027
+  DUE: 08/01
+
+MATURITY   OFFERED / SPRD   AMOUNT*    COUPON    PRICE
+08/01/2027 2,500M / +7        5,000M     5.00%     2.50      0.05
+                                    (Approx. $ Price 102.235)
+08/01/2043 32,790M / +15     65,000M     5.00%     4.10       1/4
+                                    (Approx. $ Price PTC 08/01/2036 107.266 Approx.
+YTM 4.387)
+08/01/2050 32,500M / +10     65,000M     5.00%     4.49       1/4
+                                    (Approx. $ Price PTC 08/01/2036 104.039 Approx.
+YTM 4.716)
+08/01/2053 56,415M / +7      80,000M     5.00%     4.54       1/4
+                                    (Approx. $ Price PTC 08/01/2036 103.634 Approx.
+YTM 4.759)
+08/01/2056 42,500M / +6      85,000M     5.00%     4.61       1/4
+                                    (Approx. $ Price PTC 08/01/2036 103.070 Approx.
+YTM 4.805)
+CALL FEATURES:  Optional call in 08/01/2036 @ 100.00
+
+08/01/2027 118,750M / +7    237,500M     5.00%     2.50      0.05
+                                    (Approx. $ Price 102.235)
+08/01/2028 222,890M / +9    276,365M     5.00%     2.58      0.15
+                                    (Approx. $ Price 104.482)
+08/01/2029 236,215M / +11   305,625M     5.00%     2.69      0.15
+                                    (Approx. $ Price 106.424)
+08/01/2030 135,060M / +14   191,440M     5.00%     2.83      0.15
+                                    (Approx. $ Price 107.978)
+08/01/2031 146,255M / +15   281,005M     5.00%     2.93      0.15
+                                    (Approx. $ Price 109.401)
+08/01/2031 17,585M / +15     19,280M     4.00%     2.93      0.15
+                                    (Approx. $ Price 104.859)
+08/01/2032 80,330M / +15    160,660M     5.00%     3.03      0.15
+                                    (Approx. $ Price 110.585)
+08/01/2033 70,105M / +15    140,215M     5.00%     3.13     0.225
+                                    (Approx. $ Price 111.538)
+08/01/2034 102,775M / +15   169,710M     5.00%     3.26     0.225
+                                    (Approx. $ Price 112.044)
+08/01/2034 14,130M / +21     16,475M     4.00%     3.32     0.225
+                                    (Approx. $ Price 104.694)
+08/01/2035 76,105M / +14    152,210M     5.00%     3.35     0.225
+                                    (Approx. $ Price 112.618)
+08/01/2035 1,010M / +21       2,020M     4.00%     3.42     0.225
+                                    (Approx. $ Price 104.420)
+08/01/2036 36,255M / +14     72,510M     5.00%     3.45     0.225
+                                    (Approx. $ Price 112.914)
+08/01/2037 107,560M / +17   107,560M     5.00%     3.60       1/4
+                                    (Approx. $ Price 112.537)
+08/01/2037 37,300M / +15     74,605M     5.00%     3.58       1/4
+                                    (Approx. $ Price PTC 08/01/2036 111.757 Approx.
+YTM 3.681)
+08/01/2037 945M / +24         1,890M     4.00%     3.67       1/4
+                                    (Approx. $ Price PTC 08/01/2036 102.718 Approx.
+YTM 3.695)
+08/01/2038 19,600M / +14     39,205M     5.00%     3.68       1/4
+                                    (Approx. $ Price PTC 08/01/2036 110.876 Approx.
+YTM 3.852)
+08/01/2046 172,410M / +15   246,455M     5.00%     4.31       1/4
+                                    (Approx. $ Price PTC 08/01/2036 105.514 Approx.
+YTM 4.575)
+08/01/2046 25,000M / +27     50,000M     4.25%     4.43       1/4
+                                    (Approx. $ Price 97.631)
+CALL FEATURES:  Optional call in 08/01/2036 @ 100.00

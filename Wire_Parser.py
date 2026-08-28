@@ -53,10 +53,14 @@ SP_SCALE = {'AAA': 1, 'AA+': 2, 'AA': 3, 'AA-': 4, 'A+': 5, 'A': 6, 'A-': 7,
 # The specific anchors (date + amount'M' + coupon'%' + yield) keep narrative
 # lines from matching; the tranche-sum check catches anything that slips.
 MATURITY_ROW = re.compile(
-    r'^\s*(\d{2}/\d{2}/\d{4})(?:\s+[A-Z]{1,2}(?=\s))?\s+(?:[\d,]+\s*/\s*\+?-?\d+\s+)?'
+    r'^\s*(\d{2}/\d{2}/\d{4})(?:\s+[A-Z]{1,2}(?=\s))?\s+(?:[\d,]+M?\s*/\s*\+?-?\d+\s+)?'
     r'([\d,]+)M\s+([\d.]+)%\s+([\d.]+)\+?(?:\s+([\d.]+))?(?:\s+\S.*)?$')
+# note the M? in the orders token: Wells Fargo prints "2,500M / +7" (amount
+# with M before the slash), Loop prints "78,475 / +40" (without)
 PRICE_ROW = re.compile(
-    r'\(Approx\.\s*\$\s*Price\s*(?:PTC\s*(\d{2}/\d{2}/\d{4})\s*)?([\d.]+)\)')
+    r'\(Approx\.\s*\$\s*Price\s*(?:PTC\s*(\d{2}/\d{2}/\d{4})\s*)?([\d.]+)')
+# no closing \) required: Wells Fargo wraps price lines mid-parenthesis
+# ("...107.266 Approx.\nYTM 4.387)") -- the price is captured before the wrap
 
 
 def _date(s):

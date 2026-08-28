@@ -43,12 +43,19 @@ def auto_issuer(description, df, min_frac=0.5, min_hits=3):
     best_name, best_key = None, (0, 0.0, 0)
     counts = df['primary_name_abbreviated'].astype(str).str.upper().value_counts()
 
+    SHORT_SYNONYMS = {'ST': {'ST', 'STATE'}, 'CY': {'CY', 'CITY'},
+                      'CO': {'CO', 'COUNTY'}}
+
     def _tok_match(t, w):
-        # short tokens (ST, CO, RE, NY...) prefix-match half the dictionary
+        # short tokens (ST, RE, NY...) prefix-match half the dictionary
         # ("RE" -> RELEASE), which once matched a 1-bond Maryland parking
-        # issuer to Penn State. Short tokens must match exactly; only 3+
-        # letter tokens may match as abbreviations/prefixes.
-        return w.startswith(t) if len(t) >= 3 else w == t
+        # issuer to Penn State. Short tokens must match exactly -- except a
+        # few standard ICE abbreviations with one canonical expansion
+        # ('CALIFORNIA ST' must match "STATE OF CALIFORNIA", caught on the
+        # CA GO deal 8/27). 3+ letter tokens may match as prefixes.
+        if len(t) >= 3:
+            return w.startswith(t)
+        return w in SHORT_SYNONYMS.get(t, {t})
 
     for name, n_bonds in counts.items():
         if n_bonds < 5:
