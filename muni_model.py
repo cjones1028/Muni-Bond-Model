@@ -505,6 +505,12 @@ def price_wire(deal, bundle, template, settlement_date=None,
             feat['normalized_sandp_long_rating'] = str(deal['sandp_rating'])
         rows.append(feat)
 
+    if not rows:
+        raise ValueError(
+            "No priced tranches parsed from this wire. Usual causes: the "
+            "WIRE_TEXT cell still contains the placeholder text, the paste "
+            "was incomplete, or this dealer's format needs a parser "
+            "extension. Check the wire text and re-run.")
     fdf = build_features(pd.DataFrame(rows))
     X = _prep_matrix(fdf, bundle['numeric'], bundle['categorical'], bundle['categories'])
     # version guard: if the loaded model expects a derived feature that this

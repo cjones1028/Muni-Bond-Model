@@ -191,6 +191,17 @@ with contextlib.redirect_stdout(buf):
     mm.price_wire(baml, bundle, templ_bad, concession_bps=13)  # pinned-for-regression: tests stay stable vs drifting calibration
 check("credit-mismatch template triggers warning", 'WARNING: wire rating' in buf.getvalue())
 
+# an empty/placeholder wire must fail LOUDLY with guidance, not crash with
+# a cryptic AttributeError (seen live 8/27: placeholder WIRE_TEXT cell)
+empty_deal = parse_wire("PASTE THE ENTIRE WIRE MESSAGE HERE")
+try:
+    mm.price_wire(empty_deal, bundle, templ_la, concession_bps=13)  # pinned-for-regression
+    check("empty wire raises a clear error", False, "no exception raised")
+except ValueError as e:
+    check("empty wire raises a clear error", 'No priced tranches' in str(e))
+except Exception as e:
+    check("empty wire raises a clear error", False, f"wrong exception: {type(e).__name__}")
+
 templ_ny = mm.template_from(df, issuer_contains='CITY TRANSITIONAL FIN')
 res_ny = mm.price_wire(nyc, bundle, templ_ny, concession_bps=13)  # pinned-for-regression: tests stay stable vs drifting calibration
 ny_mae = res_ny['Error (bps)'].abs().mean()
