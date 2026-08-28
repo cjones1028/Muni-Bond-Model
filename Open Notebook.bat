@@ -1,4 +1,4 @@
-﻿@echo off
+@echo off
 rem Double-click to open the muni pricer in JupyterLab on THIS computer.
 rem A black window stays open while JupyterLab runs -- leave it open; close it
 rem (or press Ctrl+C in it) when you're done. Your browser opens automatically.
