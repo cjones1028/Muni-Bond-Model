@@ -19,11 +19,25 @@
 param(
     [string]$AuthValue = $env:ICE_ACCESS_KEY,
     [string]$InputCsv = '',          # optional: CSV whose first column is CUSIPs; skips the universe fetch
+    [switch]$FullUniverse,           # fetch ICE's ENTIRE universe (1.2M+ bonds; slow, and NOT for model training)
     [int]$MaxSymbols = 0,            # optional: cap for a test run (0 = no cap)
     [int]$ChunkSize = 4000,
     [int]$NShards = 12,
     [string]$OutFile = ''
 )
+
+# 8/31/2026: ICE's universe endpoint began returning the FULL muni universe
+# (1.24M bonds) instead of the ~120k institutional evaluated slice. Training
+# on the full set measurably degraded wire pricing (LA 5.6->9.0, NYC
+# 4.4->8.9; even size-filtered versions failed -- see exp_full_universe.py),
+# so the model trains ONLY on the curated institutional list, kept in
+# institutional_cusips.csv. Default: pull that list. -FullUniverse overrides
+# for non-model uses. Add new-issue CUSIPs to the list as they enter.
+$instList = Join-Path $PSScriptRoot 'institutional_cusips.csv'
+if (-not $InputCsv -and -not $FullUniverse -and (Test-Path $instList)) {
+    $InputCsv = $instList
+    Write-Host "using curated institutional list ($instList); pass -FullUniverse for everything"
+}
 
 if (-not $AuthValue) {
     Write-Host "No API key. Set `$env:ICE_ACCESS_KEY first (AUTH_VALUE in ICE_Trading.ipynb)."
@@ -59,20 +73,45 @@ if ($InputCsv) {
     Write-Host "fetching universe ($NShards shards)..."
     foreach ($shard in 0..($NShards - 1)) {
         $result = $null
-        foreach ($attempt in 1..2) {
-            try { $result = Invoke-IceApi @{ ACCESS_KEY = $AuthValue; FETCH_UNIVERSE = $shard }; break }
+        foreach ($attempt in 1..4) {
+            try {
+                $result = Invoke-IceApi @{ ACCESS_KEY = $AuthValue; FETCH_UNIVERSE = $shard }
+                # a 200 with no 'universe' field is a soft failure (throttling
+                # returns these) -- retry it like any other failure (seen 8/31:
+                # shard 10 failed this way once after 10 fast successes)
+                if (-not ($result.PSObject.Properties.Name -contains 'universe')) {
+                    throw "response had no 'universe' field (keys: $($result.PSObject.Properties.Name -join ', '))"
+                }
+                break
+            }
             catch {
                 Write-Host "  shard $shard attempt $attempt failed: $($_.Exception.Message)"
-                if ($attempt -eq 2) { throw "Failed universe shard $shard -- stopping (incomplete universe is worse than none)." }
-                Start-Sleep -Seconds 3
+                if ($attempt -eq 4) { throw "Failed universe shard $shard after 4 attempts -- stopping (incomplete universe is worse than none)." }
+                Start-Sleep -Seconds (5 * $attempt)
             }
         }
-        if (-not $result.universe) { throw "Shard $shard response had no 'universe' key" }
+        if (-not $result.universe) {
+            # an empty (but well-formed) shard means the server packed the
+            # universe into fewer shards than NShards (seen 8/31: shard 10
+            # empty after ~10 full shards). Accept it -- the size sanity
+            # check below catches a genuinely incomplete universe.
+            Write-Host ("  shard {0,2} EMPTY -- universe spans fewer shards now, running total {1:N0}" -f $shard, $symbols.Count)
+            continue
+        }
         foreach ($line in ($result.universe -split "`r?`n")) {
             $line = $line.Trim()
             if ($line) { $symbols.Add(($line -split ',')[0]) }
         }
         Write-Host ("  shard {0,2} done, running total {1:N0}" -f $shard, $symbols.Count)
+    }
+    # sanity: today's universe must be at least 90% the size of the last
+    # successful pull, or we assume shards went missing and refuse to
+    # overwrite good data with a partial universe.
+    if (Test-Path $OutFile) {
+        $prevRows = (Get-Content $OutFile | Measure-Object -Line).Lines - 1
+        if ($prevRows -gt 0 -and $symbols.Count -lt 0.9 * $prevRows) {
+            throw ("Universe has {0:N0} symbols vs {1:N0} rows in the last pull -- more than 10% shrinkage, likely missing shards. Stopping." -f $symbols.Count, $prevRows)
+        }
     }
 }
 
