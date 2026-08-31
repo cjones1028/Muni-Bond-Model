@@ -23,3 +23,5 @@ spline_pricing*.csv
 spline_curves*.csv
 ISIN*
 train_production.log
+
+institutional_cusips.csv

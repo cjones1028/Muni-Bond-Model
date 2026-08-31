@@ -564,6 +564,15 @@ def price_wire(deal, bundle, template, settlement_date=None,
     out['Model Std (bps)'] = np.round(ens_std_bps, 1)
     tenor_days = pd.to_numeric(fdf['days_to_maturity_30_360'], errors='coerce').to_numpy()
     out['Confidence'] = np.where((ens_std_bps <= 5) & (tenor_days >= 450), 'high', 'CHECK')
+    # sub-5% coupons: dealers price new-issue 4s only ~0-12bp over their 5%
+    # twins while the secondary marks the same coupon gap ~30bp (exp_4s.py /
+    # exp_4s_all.py, 8/28: model matches ICE on outstanding low coupons to
+    # ~1bp, n=2,288 holdout, so this is retail new-issue pricing, not model
+    # error). Grading stays vs the secondary -- that's where a position
+    # marks -- so low-coupon tranches screen rich on virtually every wire.
+    # Label them so the flag reads as structural, not as a miss.
+    out['Note'] = np.where(np.array([t['coupon'] for t in priced]) < 5.0,
+                           'retail coupon', '')
 
     err = out['Error (bps)'].abs()
     print(f"wire vs model: mean abs error {err.mean():.1f} bps | "
