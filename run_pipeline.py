@@ -114,6 +114,8 @@ def main():
     p.add_argument('--report', action='store_true')
     p.add_argument('--no-archive', action='store_true',
                    help='skip writing to wire_archive (for tests/dry runs)')
+    p.add_argument('--force-archive', action='store_true',
+                   help='archive a RE-RUN of an old deal despite the staleness guard')
     args = p.parse_args()
     if args.concession is None:
         args.concession = default_concession()
@@ -197,6 +199,24 @@ def main():
     arch_dir.mkdir(exist_ok=True)
     stamp = datetime.now().strftime('%m-%d-%Y_%H-%M-%S')
     deal_tag = ''.join(ch for ch in deal['description'][:40] if ch.isalnum() or ch in ' -').strip().replace(' ', '_')
+
+    # STALENESS GUARD (9/2): the auto-concession is implied from archived
+    # long-end errors, which are only meaningful when the model's marks are
+    # contemporaneous with the wire. Re-running an OLD deal on a fresher
+    # model bakes the market's level move into its "error" (munis moved
+    # +8.4bp 8/25->8/28 alone) and poisons the calibration -- the same
+    # failure as the two bad-archive incidents, now via market drift. If
+    # this deal was first archived more than 7 days ago, skip archiving.
+    prior = sorted(arch_dir.glob(f"{deal_tag}_*.csv"))
+    if prior and not args.force_archive:
+        import time
+        age_days = (time.time() - min(f.stat().st_mtime for f in prior)) / 86400
+        if age_days > 3:
+            print(f"\n(archive SKIPPED: this deal was first priced {age_days:.0f} days ago; "
+                  f"re-runs on a fresher model absorb market drift and would poison the "
+                  f"auto-concession. Result printed above is fine to use. "
+                  f"Pass --force-archive to override.)")
+            return
     out = arch_dir / f"{deal_tag}_{stamp}.csv"
     results.to_csv(out)
     print(f"\narchived -> {out}")

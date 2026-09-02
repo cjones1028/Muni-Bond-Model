@@ -165,6 +165,10 @@ def stacked_frame(here=None):
     of them silently overwrote the production model (caught 8/27)."""
     here = Path(here) if here else Path(__file__).resolve().parent
     snaps = sorted((here / 'evals_archive').glob('ICE_Evals_*.csv'))
+    # cap at the newest 8 snapshots: daily pulls would otherwise grow the
+    # training stack (and retrain time) without bound, and month-old marks
+    # from a different rate regime add little (staleness ~1bp/6 days).
+    snaps = snaps[-8:]
     if snaps:
         df = pd.concat([clean_universe(load_evals(p)) for p in snaps])
         print(f"stacked {len(snaps)} snapshot(s): {len(df):,} rows")
